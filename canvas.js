@@ -10,7 +10,7 @@ let fuel; //pocertanje de gas
 let heating; //boolean: el mouse está abajo o no
 
 let pyramids; //metadata de las piramides en array
-let backroundTrees; //metadata de ls arboles de fondo
+// let backroundTrees; //metadata de ls arboles de fondo ------1
 
 
 //connfiguración
@@ -19,19 +19,7 @@ const mainAreaHeight = 375;
 let horizontalPadding = (window.innerWidth - mainAreaWidth) / 2;
 let verticalPadding = (window.innerHeight - mainAreaHeight) / 2;
 
-//backround data
-const hill1BaseHeight = 80;
-const hill1Speed = 0.2;
-const hill1Amplitude = 10;
-const hill1Stretch = 1;
-const hill2BaseHeight = 50;
-const hill2Speed = 0.2;
-const hill2Amplitude = 15;
-const hill2Stretch = 0.5;
-const hill3BaseHeight = 15;
-const hill3Speed = 1;
-const hill3Amplitude = 10;
-const hill3Stretch = 0.2;
+
 
 const canvas = document.getElementById('game');
 canvas.width = window.innerWidth;
@@ -41,6 +29,8 @@ const ctx = canvas.getContext('2d');
 
 const introductionElement = document.getElementById('introduction');
 const restartButton = document.getElementById('restart');
+
+
 
 // tomas los degrees en vez de radianes para los arboles del background
 Math.sinus = function (degree) {
@@ -66,32 +56,50 @@ function resetGame() {
     // generar 50 piramides y dibujar la escena inicial
     for (let i = 1; i < window.innerWidth / 50; i++) generatePyramids();
    
-    backgroundTrees = [];
-  for (let i = 1; i < window.innerWidth / 30; i++) generateBackgroundTree();
+  //   backgroundTrees = [];
+  // for (let i = 1; i < window.innerWidth / 30; i++) generateBackgroundTree();
 
   draw();
 }
 
+///HACER QUE LA IMAGEN SEA EL BACKGROUND DE TODO EL JUEGO
+/// LA IMAGEN SE QUEDA EN ESE TAMAÑO Y LO DEMÁS DE LA PANTALLA EN MEDIO HACIA ABAJO COLOR VERDE
+let img = new Image();
+img.src= "https://img2.freepng.es/20180526/rgq/kisspng-cities-skylines-desktop-wallpaper-clip-art-city-line-art-5b091c14b23203.7585266915273236687299.jpg"; 
 
-// definir espacios entre arboles
-function generateBackgroundTree(){
-    const minimumGap = 30;
-    const maximumGap = 150;
+const backgroundImage = {
+  img: img,
+  x: 0,
+  speed: -1,
 
-    const lastTree = backgroundTrees[backgroundTrees.length - 1];
-  let furthestX = lastTree ? lastTree.x : 0;
+  move: function() {
+    this.x += this.speed;
+    this.x %= canvas.width;
+  },
 
-  const x =
-    furthestX +
-    minimumGap +
-    Math.floor(Math.random() * (maximumGap - minimumGap));
+  draw: function() {
+    ctx.drawImage(this.img, this.x, 0);
+    if (this.speed < 0) {
+      ctx.drawImage(this.img, this.x + canvas.width, 0);
+    }else {
+      ctx.drawImage(this.img, this.x - this.img.width, 0);
+    }
+  },
+};
 
-  const treeColors = ["#6D8821", "#8FAC34", "#98B333"];
-  const color = treeColors[Math.floor(Math.random() * 3)];
+function updateCanvas() {
+  backgroundImage.move();
 
-  backgroundTrees.push({ x, color });
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  backgroundImage.draw();
 
+  window.requestAnimationFrame(updateCanvas);
 }
+
+// start calling updateCanvas once the image is loaded
+img.onload = updateCanvas;
+
+
 
 
 // establecer distancias entre piramides
@@ -111,7 +119,7 @@ pyramids.push({x, h})
 }
 
 resetGame();
-
+/// Si la barra espacio se presiona se reinicia el juego
 window.addEventListener("keydown", function (event) {
     if (event.key == " ") {
         event.preventDefault();
@@ -181,17 +189,8 @@ function animate() {
         pyramids.shift(); // remueve el primer item del array
         generatePyramids(); //agrega uno nuevo
     } 
-    if (
-        backgroundTrees[0].x - (balloonX * hill1Speed - horizontalPadding) <
-        -40
-      ) {
-        backgroundTrees.shift(); // remueve primer item
-        generateBackgroundTree(); // agrega uno nuevo
-      }
+
       draw(); //volver a renderizar toda la escena
-
-
-
 
 
 const hit = function hitDetention() {
@@ -216,11 +215,12 @@ function draw() {
     //generar la escena en la que parece que el globo se mueve. (solo va hacía arriba y abajo en realidad)
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight); //Limpiar cuando inicie nuevo
    
-    drawSky(); // colorea el backround con un gradiente
+   
+    // drawSky(); // colorea el backround con un gradiente
     //Guardar y acumular la posición
     ctx.save();
     ctx.translate(0, verticalPadding + mainAreaHeight);
-    drawBackgroundHills(); //llama a la función
+    // drawBackgroundHills(); //llama a la función
 
     ctx.translate(horizontalPadding, 0);
 
@@ -302,7 +302,7 @@ function drawBalloon() {
  
 function drawHeader() {
     // Fuel meter
-    ctx.strokeStyle = fuel <= 30 ? "blue" : "orange";
+    ctx.strokeStyle = fuel <= 30 ? "black" : "red";
     ctx.strokeRect(30, 30, 150, 30);
     ctx.fillStyle = fuel <= 30 
       ? "rgba(255,0,0,0.5)" 
@@ -318,100 +318,22 @@ function drawHeader() {
     ctx.fillText(`${score} m`, window.innerWidth - 30, 30);
   }
   
-  function drawSky() {
-    var gradient = ctx.createLinearGradient(0, 0, 0, window.innerHeight);
-    gradient.addColorStop(0, "#AADBEA");
-    gradient.addColorStop(1, "#FEF1E1");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-  }
-  
-  function drawBackgroundHills() {
-    // Dibujar colinas
-    drawHill(
-      hill1BaseHeight,
-      hill1Speed,
-      hill1Amplitude,
-      hill1Stretch,
-      "#AAD155" // #95C629"
-    );
-    drawHill(
-      hill2BaseHeight,
-      hill2Speed,
-      hill2Amplitude,
-      hill2Stretch,
-      "#84B249" // "#659F1C"
-    );
-  
-    drawHill(
-      hill3BaseHeight,
-      hill3Speed,
-      hill3Amplitude,
-      hill3Stretch,
-      "#8f5b18"
-    );
-  
-    // Dibujar arboles background
-    backgroundTrees.forEach((tree) => drawBackgroundTree(tree.x, tree.color));
-  }
-  
-  // A hill is a shape under a stretched out sinus wave
-  function drawHill(baseHeight, speedMultiplier, amplitude, stretch, color) {
-    ctx.beginPath();
-    ctx.moveTo(0, window.innerHeight);
-    ctx.lineTo(0, getHillY(0, baseHeight, amplitude, stretch));
-    for (let i = 0; i <= window.innerWidth; i++) {
-      ctx.lineTo(i, getHillY(i, baseHeight, speedMultiplier, amplitude, stretch));
+ function winner () {
+   if (this.score === 300){
+     return ('You are a winner!'); ///// cuando haya alcanzado 300 m gana
     }
-    ctx.lineTo(window.innerWidth, window.innerHeight);
-    ctx.fillStyle = color;
-    ctx.fill();
-  }
+   }
+ 
+
+//PONER ESTE DE FONDO
+  // function drawSky() {
+  //   var gradient = ctx.createLinearGradient(0, 0, 0, window.innerHeight);
+  //   gradient.addColorStop(0, "#AADBEA");
+  //   gradient.addColorStop(1, "#FEF1E1");
+  //   ctx.fillStyle = gradient;
+  //   ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+  // }
   
-  function drawBackgroundTree(x, color) {
-    ctx.save();
-    ctx.translate(
-      (-balloonX * hill1Speed + x) * hill1Stretch,
-      getTreeY(x, hill1BaseHeight, hill1Amplitude)
-    );
-  
-    const treeTrunkHeight = 5;
-    const treeTrunkWidth = 2;
-    const treeCrownHeight = 25;
-    const treeCrownWidth = 10;
-  
-    // Draw trunk
-    ctx.fillStyle = "#7D833C";
-    ctx.fillRect(
-      -treeTrunkWidth / 2,
-      -treeTrunkHeight,
-      treeTrunkWidth,
-      treeTrunkHeight
-    );
-  
-    // Draw crown
-    ctx.beginPath();
-    ctx.moveTo(-treeCrownWidth / 2, -treeTrunkHeight);
-    ctx.lineTo(0, -(treeTrunkHeight + treeCrownHeight));
-    ctx.lineTo(treeCrownWidth / 2, -treeTrunkHeight);
-    ctx.fillStyle = color;
-    ctx.fill();
-  
-    ctx.restore();
-  }
-  
-  function getHillY(x, baseHeight, speedMultiplier, amplitude, stretch) {
-    const sineBaseY = -baseHeight;
-    return (
-      Math.sinus((balloonX * speedMultiplier + x) * stretch) * amplitude +
-      sineBaseY
-    );
-  }
-  
-  function getTreeY(x, baseHeight, amplitude) {
-    const sineBaseY = -baseHeight;
-    return Math.sinus(x) * amplitude + sineBaseY;
-  }
 
 
  // detectar cuando golpee
@@ -437,3 +359,6 @@ function drawHeader() {
       function getDistance(point1, point2) {
         return Math.sqrt((point2.x - point1.x) ** 2 + (point2.y - point1.y) ** 2);
       }
+
+
+      /// https://codepen.io/HunorMarton/pen/VwKOqdY
