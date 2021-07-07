@@ -1,364 +1,460 @@
+/*
+
+
+HTML Canvas tutorial walking through the source code of this game: 
+
+https://youtu.be/Ymbv6m3EuNw
+
+Follow me on Twitter for more: https://twitter.com/HunorBorbely
+
+*/
+
+// Game data
 let gameStarted; // Boolean
 
 let balloonX;
 let balloonY;
 
-let verticalVelocity; //velocidad vertical actual del globo
-let horizontalVelocity; //velocidad horizontal actual
+let verticalVelocity; // Current vertical velocity of the balloon
+let horizontalVelocity; // Current horizontal velocity of the balloon
 
-let fuel; //pocertanje de gas
-let heating; //boolean: el mouse está abajo o no
+let fuel; // Percentage of fuel left
+let heating; // Boolean: Is the mouse down or not?
 
-let pyramids; //metadata de las piramides en array
-// let backroundTrees; //metadata de ls arboles de fondo ------1
+let trees; // Metadata of the trees in an array
+let backgroundTrees; // Metadata of the trees on the hills in the background
 
-
-//connfiguración
+// Configuration
 const mainAreaWidth = 400;
 const mainAreaHeight = 375;
 let horizontalPadding = (window.innerWidth - mainAreaWidth) / 2;
 let verticalPadding = (window.innerHeight - mainAreaHeight) / 2;
 
+const hill1BaseHeight = 80;
+const hill1Speed = 0.2;
+const hill1Amplitude = 10;
+const hill1Stretch = 1;
+const hill2BaseHeight = 50;
+const hill2Speed = 0.2;
+const hill2Amplitude = 15;
+const hill2Stretch = 0.5;
+const hill3BaseHeight = 15;
+const hill3Speed = 1;
+const hill3Amplitude = 10;
+const hill3Stretch = 0.2;
 
-
-const canvas = document.getElementById('game');
+const canvas = document.getElementById("game");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext("2d");
 
-const introductionElement = document.getElementById('introduction');
-const restartButton = document.getElementById('restart');
+const introductionElement = document.getElementById("introduction");
+const restartButton = document.getElementById("restart");
 
-
-
-// tomas los degrees en vez de radianes para los arboles del background
+// Add a custom sin function that takes degrees instead of radians
 Math.sinus = function (degree) {
-    return Math.sin((degree / 180) * Math.PI);
-  };
-//Iniciar layout
+  return Math.sin((degree / 180) * Math.PI);
+};
+
+// Initialize layout
 resetGame();
 
+// Resets game variables and layouts but does not start the game (game starts on keypress)
 function resetGame() {
-    //cuando se resetea el juego
-    gameStarted = false; //cuando debe iniciar el juego
-    heating = false; // cuando el mouse is down
-    verticalVelocity = 5; //seguimiento de la velocidad vertical y horizontal
-    horizontalVelocity = 5;
-    balloonX = 0; //posición inicial del balloon 
-    balloonY = 0;
-    fuel = 100;
+  // Reset game progress
+  gameStarted = false;
+  heating = false;
+  verticalVelocity = 5;
+  horizontalVelocity = 5;
+  balloonX = 0;
+  balloonY = 0;
+  fuel = 100;
 
-    introductionElement.style.opacity = 1;
-    restartButton.style.display = "none";
+  introductionElement.style.opacity = 1;
+  restartButton.style.display = "none";
 
-    pyramids = [];
-    // generar 50 piramides y dibujar la escena inicial
-    for (let i = 1; i < window.innerWidth / 50; i++) generatePyramids();
-   
-  //   backgroundTrees = [];
-  // for (let i = 1; i < window.innerWidth / 30; i++) generateBackgroundTree();
+  trees = [];
+  for (let i = 1; i < window.innerWidth / 50; i++) generateTree();
+
+  backgroundTrees = [];
+  for (let i = 1; i < window.innerWidth / 30; i++) generateBackgroundTree();
 
   draw();
 }
 
-///HACER QUE LA IMAGEN SEA EL BACKGROUND DE TODO EL JUEGO
-/// LA IMAGEN SE QUEDA EN ESE TAMAÑO Y LO DEMÁS DE LA PANTALLA EN MEDIO HACIA ABAJO COLOR VERDE
-let img = new Image();
-img.src= "https://img2.freepng.es/20180526/rgq/kisspng-cities-skylines-desktop-wallpaper-clip-art-city-line-art-5b091c14b23203.7585266915273236687299.jpg"; 
+function generateBackgroundTree() {
+  const minimumGap = 30;
+  const maximumGap = 150;
 
-const backgroundImage = {
-  img: img,
-  x: 0,
-  speed: -1,
+  // X coordinate of the right edge of the furthest tree
+  const lastTree = backgroundTrees[backgroundTrees.length - 1];
+  let furthestX = lastTree ? lastTree.x : 0;
 
-  move: function() {
-    this.x += this.speed;
-    this.x %= canvas.width;
-  },
+  const x =
+    furthestX +
+    minimumGap +
+    Math.floor(Math.random() * (maximumGap - minimumGap));
 
-  draw: function() {
-    ctx.drawImage(this.img, this.x, 0);
-    if (this.speed < 0) {
-      ctx.drawImage(this.img, this.x + canvas.width, 0);
-    }else {
-      ctx.drawImage(this.img, this.x - this.img.width, 0);
-    }
-  },
-};
+  
+    backgroundTrees.push({ x });
+  }
 
-function updateCanvas() {
-  backgroundImage.move();
+function generateTree() {
+  const minimumGap = 50; // Minimum distance between two trees
+  const maximumGap = 600; // Maximum distance between two trees
 
-  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-  backgroundImage.draw();
+  const x = trees.length
+    ? trees[trees.length - 1].x +
+      minimumGap +
+      Math.floor(Math.random() * (maximumGap - minimumGap))
+    : 400;
 
-  window.requestAnimationFrame(updateCanvas);
-}
+  const h = 60 + Math.random() * 80; // Height
 
-// start calling updateCanvas once the image is loaded
-img.onload = updateCanvas;
+  const r1 = 0 + Math.random() * 16; // Radius
+  const r2 = 0 + Math.random() * 16;
+  const r3 = 0 + Math.random() * 16;
+  const r4 = 0 + Math.random() * 16;
+  const r5 = 0 + Math.random() * 16;
+  const r6 = 0 + Math.random() * 16;
+  const r7 = 0 + Math.random() * 16;
 
+  const treeColors = ["#2bc4df", "#2bdf34", "#c43fe6"];
+  const color = treeColors[Math.floor(Math.random() * 3)];
 
-
-
-// establecer distancias entre piramides
-function generatePyramids() {
-    const minimumGap = 40; // distancia min entre dos piramides
-    const maximumGap = 600; // distancia máxima entre 2 piramides
-// Elegir piradmides aleatoriamente
-const x = pyramids.length
-? pyramids[pyramids.length - 1].x +
-  minimumGap +
-  Math.floor(Math.random() * (maximumGap - minimumGap))
-: 400;
-
-const h = 60 + Math.random() * 80; // Altura
-
-pyramids.push({x, h})
+  trees.push({ x, h, r1, r2, r3, r4, r5, r6, r7, color });
 }
 
 resetGame();
-/// Si la barra espacio se presiona se reinicia el juego
+
+// If space was pressed restart the game
 window.addEventListener("keydown", function (event) {
-    if (event.key == " ") {
-        event.preventDefault();
-        resetGame();
-        return;
-    }
+  if (event.key == " ") {
+    event.preventDefault();
+    resetGame();
+    return;
+  }
 });
-    
-   //agregar un callback evento para definir el heatin con el mouse down y up
+
 window.addEventListener("mousedown", function () {
-    heating = true;
+  heating = true;
 
-    // también informar al navegador que quiero realizar animación, programando el repintado para el próximo ciclo
-    // solo si el juego no ha iniciado. Solo animar una vez 
-    if(!gameStarted) {
-        introductionElement.style.opacity = 0; //Hace que la frase desaparezca al iniciar
-        gameStarted = true;
-        window.requestAnimationFrame(animate);
-    
-    }
-
+  if (!gameStarted) {
+    introductionElement.style.opacity = 0;
+    gameStarted = true;
+    window.requestAnimationFrame(animate);
+  }
 });
 
 window.addEventListener("mouseup", function () {
-    heating = false;
+  heating = false;
 });
- 
-// evento cambiar tamaño
+
 window.addEventListener("resize", function () {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    horizontalPadding = (window.innerWidth - mainAreaWidth) / 2;
-    verticalPadding = (window.innerHeight - mainAreaHeight) / 2;
-    draw();
-  });
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  horizontalPadding = (window.innerWidth - mainAreaWidth) / 2;
+  verticalPadding = (window.innerHeight - mainAreaHeight) / 2;
+  draw();
+});
 
-// bucle principal del juego - animacion-
-//retornar si el juego no ha comenzado
+// The main game loop
 function animate() {
-    if (!gameStarted) return;
+  if (!gameStarted) return;
 
-    const velocityIncreaseRising = 0.4;  //velocidad incrementando
-    const velocityDecreaseDescending = 0.2; //velocidad descendiendo
+  const velocityChangeWhileHeating = 0.4;
+  const velocityChangeWhileCooling = 0.2;
 
-    // condicionarlo cuando ya no hay fuel
-
-    if (heating && fuel > 0) {
-        if (verticalVelocity > -8) {
-            //Límite máximo de subida (empujar hacía arriba)
-            verticalVelocity -= velocityIncreaseRising
-        }
-        fuel -= 0.002 * -balloonY;
-    } else if (verticalVelocity < 5) {
-        //Límite máximo de bajada (dejar que la gravedad actùe )
-        verticalVelocity += velocityDecreaseDescending //ajustar la velocidad
+  if (heating && fuel > 0) {
+    if (verticalVelocity > -8) {
+      // Limit maximum rising spead
+      verticalVelocity -= velocityChangeWhileHeating;
     }
- /// cuando las coordenadas crecen hacía abajo los valores están al revés
- // establecer un límite inferior para que la velocidad descendiendo sea lenta
-    balloonY += verticalVelocity; // después de ajustar, establece posicion actual del globo
-    if (balloonY > 0) balloonY = 0; // aterrizando el globo, para
-    if (balloonY < 0) balloonX += horizontalVelocity; //mover el globo a velocidad hoizontal si no ha aterrizado(es un valor constante)
-    
+    fuel -= 0.002 * -balloonY;
+  } else if (verticalVelocity < 5) {
+    // Limit maximum descending spead
+    verticalVelocity += velocityChangeWhileCooling;
+  }
 
-//para no quedarnos sin piramides e irlas actualizando
+  balloonY += verticalVelocity; // Move the balloon up or down
+  if (balloonY > 0) balloonY = 0; // The balloon landed on the ground
+  if (balloonY < 0) balloonX += horizontalVelocity; // Move balloon to the right if not on the ground
 
-    if(pyramids[0].x - (balloonX - horizontalPadding) < -100) {
-        pyramids.shift(); // remueve el primer item del array
-        generatePyramids(); //agrega uno nuevo
-    } 
+  // If a tree moves out of the picture replace it with a new one
+  if (trees[0].x - (balloonX - horizontalPadding) < -100) {
+    trees.shift(); // Remove first item in array
+    generateTree(); // Add a new item to the array
+  }
 
-      draw(); //volver a renderizar toda la escena
+  // If a tree on the background hill moves out of the picture replace it with a new one
+  if (
+    backgroundTrees[0].x - (balloonX * hill1Speed - horizontalPadding) <
+    -40
+  ) {
+    backgroundTrees.shift(); // Remove first item in array
+    generateBackgroundTree(); // Add a new item to the array
+  }
 
+  draw(); // Re-render the whole scene
 
-const hit = function hitDetention() {
-    if (hit || (fuel <= 0 && balloonY >= 0)) {
-        restartButton.style.display = "block";
-        return;
-    }
+  // If the balloon hit a tree OR ran out of fuel and landed then stop the game
+  const hit = hitDetection();
+  if (hit || (fuel <= 0 && balloonY >= 0)) {
+    restartButton.style.display = "block";
+    return;
+  }
+
+  window.requestAnimationFrame(animate);
 }
-    window.requestAnimationFrame(animate);
-    
-
-}
-    //Si el globo pega una piramide o se le acaba la gaso y pega 
-//antes de solicitar la otra animación comprobamos si pegó o acabó gaso y retorna la función
-//así que ya no solicita otra animación y acaba el juego
-
-
 
 function draw() {
-   
-    //mover la escena sobre la X del globo en dirección opuesta para equilibrar su mov
-    //generar la escena en la que parece que el globo se mueve. (solo va hacía arriba y abajo en realidad)
-    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight); //Limpiar cuando inicie nuevo
-   
-   
-    // drawSky(); // colorea el backround con un gradiente
-    //Guardar y acumular la posición
-    ctx.save();
-    ctx.translate(0, verticalPadding + mainAreaHeight);
-    // drawBackgroundHills(); //llama a la función
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-    ctx.translate(horizontalPadding, 0);
+  drawSky(); // Fill the background with a gradient
 
-  // centra el area principal de canvas en el medio de la pantalla
+  ctx.save();
+  ctx.translate(0, verticalPadding + mainAreaHeight);
+  drawBackgroundHills();
+
+  ctx.translate(horizontalPadding, 0);
+
+  // Center main canvas area to the middle of the screen
   ctx.translate(-balloonX, 0);
 
+  // Draw scene
+  drawTrees();
+  drawBalloon();
 
-//dibujar escena llamando la función
-drawPyramids();
-drawBalloon();
-//resetear a la posición inicial
-ctx.restore();
+  // Restore transformation
+  ctx.restore();
 
-drawHeader(); //dibujar encabezado
-
+  // Header is last because it's on top of everything else
+  drawHeader();
 }
+
 restartButton.addEventListener("click", function (event) {
-    event.preventDefault();
-    resetGame();
-    restartButton.style.display = "none";
-  });       // activar boton de reseteo
+  event.preventDefault();
+  resetGame();
+  restartButton.style.display = "none";
+});
 
-
-
-  function drawPyramids() {
-      
-    ctx.save();
-   
-
-const pyramidWidth = 80;    
-ctx.fillStyle = "#c99f16";
-ctx.beginPath();
-ctx.moveTo(pyramidWidth,0);
-ctx.lineTo(0,-pyramidWidth);
-ctx.lineTo(-pyramidWidth,0);
-ctx.closePath();
-ctx.fill();
-
-ctx.restore();
-
+function drawCircle(cx, cy, radius) {
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+  ctx.fill();
 }
 
-  
-function drawBalloon() {
+function drawTrees() {
+  trees.forEach(({ x, h, r1, r2, r3, r4, r5, r6, r7, color }) => {
     ctx.save();
-  
-    ctx.translate(balloonX, balloonY);
-  
-    // Cart
-    ctx.fillStyle = "#E9A6D5";
-    ctx.fillRect(-30, -40, 60, 10);
-    ctx.fillStyle = "#EA9E8D";
-    ctx.fillRect(-30, -30, 60, 30);
-  
-    // Cables
-    ctx.strokeStyle = "#F383D1";
-    ctx.lineWidth = 2;
+    ctx.translate(x, 0);
+
+    // Trunk
+    const trunkWidth = 80;
+    ctx.fillStyle = "#AC8141";
     ctx.beginPath();
-    ctx.moveTo(-24, -40);
-    ctx.lineTo(-24, -60);
-    ctx.moveTo(24, -40);
-    ctx.lineTo(24, -60);
-    ctx.stroke();
-  
-    // Balloon
-    ctx.fillStyle = "#429FB6";
-    ctx.beginPath();
-    ctx.moveTo(-30, -60);
-    ctx.quadraticCurveTo(-80, -120, -80, -160);
-    ctx.arc(0, -160, 80, Math.PI, 0, false);
-    ctx.quadraticCurveTo(80, -120, 30, -60);
+    ctx.moveTo(trunkWidth, 0);
+    ctx.lineTo(0, -trunkWidth)
+    ctx.lineTo(-trunkWidth, 0);
+    
     ctx.closePath();
     ctx.fill();
-  
+
+    // Crown
+    ctx.fillStyle = color;
+    drawCircle(-20, -h - 15, r1);
+    drawCircle(-30, -h - 25, r2);
+    drawCircle(-20, -h - 35, r3);
+    drawCircle(0, -h - 45, r4);
+    drawCircle(20, -h - 35, r5);
+    drawCircle(30, -h - 25, r6);
+    drawCircle(20, -h - 15, r7);
+
     ctx.restore();
-    
-  }
+  });
+}
 
- 
+function drawBalloon() {
+  ctx.save();
+
+  ctx.translate(balloonX, balloonY);
+
+  // Cart
+  ctx.fillStyle = "#D62828";
+  ctx.fillRect(-30, -40, 60, 10);
+  ctx.fillStyle = "#2472E6";
+  ctx.fillRect(-30, -30, 60, 30);
+
+  // Cables
+  ctx.strokeStyle = "#D62828";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-24, -40);
+  ctx.lineTo(-24, -60);
+  ctx.moveTo(24, -40);
+  ctx.lineTo(24, -60);
+  ctx.stroke();
+
+  // Balloon
+  ctx.fillStyle = "#E6C224";
+  ctx.beginPath();
+  ctx.moveTo(-30, -60);
+  ctx.quadraticCurveTo(-80, -120, -80, -160);
+  ctx.arc(0, -160, 80, Math.PI, 0, false);
+  ctx.quadraticCurveTo(80, -120, 30, -60);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
 function drawHeader() {
-    // Fuel meter
-    ctx.strokeStyle = fuel <= 30 ? "black" : "red";
-    ctx.strokeRect(30, 30, 150, 30);
-    ctx.fillStyle = fuel <= 30 
-      ? "rgba(255,0,0,0.5)" 
-      : "rgba(150,150,200,0.5)";
-    ctx.fillRect(30, 30, (150 * fuel) / 100, 30);
-  
-    // Score
-    const score = Math.floor(balloonX / 30);
-    ctx.fillStyle = "black";
-    ctx.font = "bold 32px Tahoma";
-    ctx.textAlign = "end";
-    ctx.textBaseline = "top";
-    ctx.fillText(`${score} m`, window.innerWidth - 30, 30);
+  // Fuel meter
+  ctx.strokeStyle = fuel <= 30 ? "red" : "white";
+  ctx.strokeRect(30, 30, 150, 30);
+  ctx.fillStyle = fuel <= 30 
+    ? "rgba(153, 0, 255, 0.507)" 
+    : "rgba(56, 203, 240, 0.5)";
+  ctx.fillRect(30, 30, (150 * fuel) / 100, 30);
+
+  // Score
+  const score = Math.floor(balloonX / 30);
+  ctx.fillStyle = "white";
+  ctx.font = "bold 32px Tahoma";
+  ctx.textAlign = "end";
+  ctx.textBaseline = "top";
+  ctx.fillText(`${score} m`, window.innerWidth - 30, 30);
+}
+
+function drawSky() {
+  var gradient = ctx.createLinearGradient(0, 0, 0, window.innerHeight);
+  gradient.addColorStop(0, "#E2BB8C");
+  gradient.addColorStop(1, "#FEF1E1");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+}
+
+function drawBackgroundHills() {
+  // Draw hills
+  drawHill(
+    hill1BaseHeight,
+    hill1Speed,
+    hill1Amplitude,
+    hill1Stretch,
+    "#BE9C68" 
+  );
+  drawHill(
+    hill2BaseHeight,
+    hill2Speed,
+    hill2Amplitude,
+    hill2Stretch,
+    "#B99155" 
+  );
+
+  drawHill(
+    hill3BaseHeight,
+    hill3Speed,
+    hill3Amplitude,
+    hill3Stretch,
+    "#b18b54"
+  );
+
+  // Draw background trees
+  backgroundTrees.forEach((tree) => drawBackgroundTree(tree.x, tree.color));
+}
+
+// A hill is a shape under a stretched out sinus wave
+function drawHill(baseHeight, speedMultiplier, amplitude, stretch, color) {
+  ctx.beginPath();
+  ctx.moveTo(0, window.innerHeight);
+  ctx.lineTo(0, getHillY(0, baseHeight, amplitude, stretch));
+  for (let i = 0; i <= window.innerWidth; i++) {
+    ctx.lineTo(i, getHillY(i, baseHeight, speedMultiplier, amplitude, stretch));
   }
-  
- function winner () {
-   if (this.score === 300){
-     return ('You are a winner!'); ///// cuando haya alcanzado 300 m gana
-    }
-   }
- 
+  ctx.lineTo(window.innerWidth, window.innerHeight);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
 
-//PONER ESTE DE FONDO
-  // function drawSky() {
-  //   var gradient = ctx.createLinearGradient(0, 0, 0, window.innerHeight);
-  //   gradient.addColorStop(0, "#AADBEA");
-  //   gradient.addColorStop(1, "#FEF1E1");
-  //   ctx.fillStyle = gradient;
-  //   ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-  // }
+function drawBackgroundTree(x, color) {
+  ctx.save();
+  ctx.translate(
+    (-balloonX * hill1Speed + x) * hill1Stretch,
+    getTreeY(x, hill1BaseHeight, hill1Amplitude)
+  );
+
+  const treeTrunkHeight = 80;
+  const treeTrunkWidth = 40;
   
 
+  // Draw trunk
+  ctx.fillStyle = "#B6976E";
+  ctx.fillRect(
+    -treeTrunkWidth / 2,
+    -treeTrunkHeight,
+    treeTrunkWidth,
+    treeTrunkHeight
+  );
 
- // detectar cuando golpee
- function hitDetention() {
-    const cartBottomLeft = { x: balloonY - 30, y: balloonY }; //esquina inferior izq
-    const cartBottomRight = { x: balloonY + 30, y: balloonY }; //esq, inferior der
-    const cartTopRight = { x: balloonX + 30, y: balloonY - 40 }; // esq media derecha
-    
-  
-    const pyramidTop = { x: balloonX, y: balloonY };
-   
-    if (getDistance(cartBottomLeft, pyramidTop) < balloonX.x) return true;
-    if (getDistance(cartBottomRight, pyramidTop) < balloonX.x) return true;
-    if (getDistance(cartTopRight, pyramidTop) < balloonX.x) return true;
-    if (getDistance(cartBottomLeft, pyramidTop) < balloonY.y) return true;
-    if (getDistance(cartBottomRight, pyramidTop) < balloonY.y) return true;
-    if (getDistance(cartTopRight, pyramidTop) < balloonY.y) return true;
-      }
+  // Draw crown
+  ctx.beginPath();
+  ctx.moveTo(0, -treeTrunkHeight);
+  ctx.lineTo(0, -treeTrunkHeight);
+  ctx.fillStyle = color;
+  ctx.fill();
 
+  ctx.restore();
+}
 
+function getHillY(x, baseHeight, speedMultiplier, amplitude, stretch) {
+  const sineBaseY = -baseHeight;
+  return (
+    Math.sinus((balloonX * speedMultiplier + x) * stretch) * amplitude +
+    sineBaseY
+  );
+}
 
- 
-      function getDistance(point1, point2) {
-        return Math.sqrt((point2.x - point1.x) ** 2 + (point2.y - point1.y) ** 2);
-      }
+function getTreeY(x, baseHeight, amplitude) {
+  const sineBaseY = -baseHeight;
+  return Math.sinus(x) * amplitude + sineBaseY;
+}
 
+function hitDetection() {
+  const cartBottomLeft = { x: balloonX - 30, y: balloonY };
+  const cartBottomRight = { x: balloonX + 30, y: balloonY };
+  const cartTopRight = { x: balloonX + 30, y: balloonY - 40 };
 
-      /// https://codepen.io/HunorMarton/pen/VwKOqdY
+  for (const { x, h, r1, r2, r3, r4, r5 } of trees) {
+    const treeBottomLeft = { x: x - 20, y: -h - 15 };
+    const treeLeft = { x: x - 30, y: -h - 25 };
+    const treeTopLeft = { x: x - 20, y: -h - 35 };
+    const treeTop = { x: x, y: -h - 45 };
+    const treeTopRight = { x: x + 20, y: -h - 35 };
+
+    if (getDistance(cartBottomLeft, treeBottomLeft) < r1) return true;
+    if (getDistance(cartBottomRight, treeBottomLeft) < r1) return true;
+    if (getDistance(cartTopRight, treeBottomLeft) < r1) return true;
+
+    if (getDistance(cartBottomLeft, treeLeft) < r2) return true;
+    if (getDistance(cartBottomRight, treeLeft) < r2) return true;
+    if (getDistance(cartTopRight, treeLeft) < r2) return true;
+
+    if (getDistance(cartBottomLeft, treeTopLeft) < r3) return true;
+    if (getDistance(cartBottomRight, treeTopLeft) < r3) return true;
+    if (getDistance(cartTopRight, treeTopLeft) < r3) return true;
+
+    if (getDistance(cartBottomLeft, treeTop) < r4) return true;
+    if (getDistance(cartBottomRight, treeTop) < r4) return true;
+    if (getDistance(cartTopRight, treeTop) < r4) return true;
+
+    if (getDistance(cartBottomLeft, treeTopRight) < r5) return true;
+    if (getDistance(cartBottomRight, treeTopRight) < r5) return true;
+    if (getDistance(cartTopRight, treeTopRight) < r5) return true;
+  }
+}
+
+function getDistance(point1, point2) {
+  return Math.sqrt((point2.x - point1.x) ** 2 + (point2.y - point1.y) ** 2);
+}
+
