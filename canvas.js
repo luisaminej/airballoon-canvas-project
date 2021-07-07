@@ -1,13 +1,3 @@
-/*
-
-
-HTML Canvas tutorial walking through the source code of this game: 
-
-https://youtu.be/Ymbv6m3EuNw
-
-Follow me on Twitter for more: https://twitter.com/HunorBorbely
-
-*/
 
 // Game data
 let gameStarted; // Boolean
@@ -15,16 +5,16 @@ let gameStarted; // Boolean
 let balloonX;
 let balloonY;
 
-let verticalVelocity; // Current vertical velocity of the balloon
-let horizontalVelocity; // Current horizontal velocity of the balloon
+let verticalVelocity; ////velocidad vertical actual del globo
+let horizontalVelocity; // //velocidad horizontal actual
 
-let fuel; // Percentage of fuel left
-let heating; // Boolean: Is the mouse down or not?
+let fuel; // pocertanje de gas
+let heating; // boolean: el mouse está abajo o no
 
-let trees; // Metadata of the trees in an array
-let backgroundTrees; // Metadata of the trees on the hills in the background
+let pyramids; // metadata de las piramides en array
+let backgroundBuilding; // Metadata de los hills
 
-// Configuration
+//connfiguración
 const mainAreaWidth = 400;
 const mainAreaHeight = 375;
 let horizontalPadding = (window.innerWidth - mainAreaWidth) / 2;
@@ -51,45 +41,48 @@ const ctx = canvas.getContext("2d");
 
 const introductionElement = document.getElementById("introduction");
 const restartButton = document.getElementById("restart");
+const winButton = document.getElementById("win");
 
-// Add a custom sin function that takes degrees instead of radians
+// Función para cambiar radianes a degrees
 Math.sinus = function (degree) {
   return Math.sin((degree / 180) * Math.PI);
 };
 
-// Initialize layout
+// Layout del juego
 resetGame();
 
-// Resets game variables and layouts but does not start the game (game starts on keypress)
+// Resetea las variables del juego y layout (juego comienza en keypress)
 function resetGame() {
-  // Reset game progress
-  gameStarted = false;
-  heating = false;
-  verticalVelocity = 5;
+  // RResetea el progreso del juego
+  gameStarted = false; //cuando debe iniciar el juego
+  heating = false; // cuando el mouse is down
+  verticalVelocity = 5; //seguimiento de la velocidad vertical y horizontal
   horizontalVelocity = 5;
-  balloonX = 0;
+  balloonX = 0; //posición inicial del balloon 
   balloonY = 0;
   fuel = 100;
 
   introductionElement.style.opacity = 1;
   restartButton.style.display = "none";
+  winButton.style.display = "none";
 
-  trees = [];
-  for (let i = 1; i < window.innerWidth / 50; i++) generateTree();
-
-  backgroundTrees = [];
-  for (let i = 1; i < window.innerWidth / 30; i++) generateBackgroundTree();
+// generar 50 piramides y dibujar la escena inicial
+  pyramids = [];
+  for (let i = 1; i < window.innerWidth / 50; i++) generatePyramid();
+// Genera los edificios
+  backgroundBuilding = [];
+  for (let i = 1; i < window.innerWidth / 30; i++) generateBackgroundBuilding();
 
   draw();
 }
-
-function generateBackgroundTree() {
+// define espacios entre edificios
+function generateBackgroundBuilding() {
   const minimumGap = 30;
   const maximumGap = 150;
 
-  // X coordinate of the right edge of the furthest tree
-  const lastTree = backgroundTrees[backgroundTrees.length - 1];
-  let furthestX = lastTree ? lastTree.x : 0;
+  // Coordenada X del borde derecho del árbol más lejano
+  const lastBuilding = backgroundBuilding[backgroundBuilding.length - 1];
+  let furthestX = lastBuilding ? lastBuilding.x : 0;
 
   const x =
     furthestX +
@@ -97,15 +90,15 @@ function generateBackgroundTree() {
     Math.floor(Math.random() * (maximumGap - minimumGap));
 
   
-    backgroundTrees.push({ x });
+    backgroundBuilding.push({ x });
   }
-
-function generateTree() {
-  const minimumGap = 50; // Minimum distance between two trees
-  const maximumGap = 600; // Maximum distance between two trees
-
-  const x = trees.length
-    ? trees[trees.length - 1].x +
+// establecer distancias entre piramides
+function generatePyramid() {
+  const minimumGap = 50; // // distancia min entre dos piramides
+  const maximumGap = 600; //distancia máxima entre 2 piramides
+ // Elegir piradmides aleatoriamente
+  const x = pyramids.length
+    ? pyramids[pyramids.length - 1].x +
       minimumGap +
       Math.floor(Math.random() * (maximumGap - minimumGap))
     : 400;
@@ -120,15 +113,16 @@ function generateTree() {
   const r6 = 0 + Math.random() * 16;
   const r7 = 0 + Math.random() * 16;
 
-  const treeColors = ["#2bc4df", "#2bdf34", "#c43fe6"];
-  const color = treeColors[Math.floor(Math.random() * 3)];
+  const pyramidColors = ["rgba(230, 170, 97, 0.445)", "rgba(230, 170, 97, 0.349)", "rgba(201, 158, 107, 0.349)"];
+  const color = pyramidColors[Math.floor(Math.random() * 3)];
 
-  trees.push({ x, h, r1, r2, r3, r4, r5, r6, r7, color });
+  pyramids.push({ x, h, r1, r2, r3, r4, r5, r6, r7, color });
 }
 
-resetGame();
 
-// If space was pressed restart the game
+resetGame();
+//agregar un callback evento para definir el heatin con el mouse down y up
+// si space se presiona se reinicia el juego
 window.addEventListener("keydown", function (event) {
   if (event.key == " ") {
     event.preventDefault();
@@ -136,9 +130,12 @@ window.addEventListener("keydown", function (event) {
     return;
   }
 });
-
+//agregar un callback evento para definir el heatin con el mouse down y up
 window.addEventListener("mousedown", function () {
   heating = true;
+
+// también informar al navegador que quiero realizar animación, programando el repintado para el próximo ciclo
+    // solo si el juego no ha iniciado. Solo animar una vez 
 
   if (!gameStarted) {
     introductionElement.style.opacity = 0;
@@ -150,7 +147,7 @@ window.addEventListener("mousedown", function () {
 window.addEventListener("mouseup", function () {
   heating = false;
 });
-
+// evento cambiar
 window.addEventListener("resize", function () {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -158,45 +155,50 @@ window.addEventListener("resize", function () {
   verticalPadding = (window.innerHeight - mainAreaHeight) / 2;
   draw();
 });
-
-// The main game loop
+// bucle principal del juego - animacion-
+//retornar si el juego no ha comenzado
 function animate() {
   if (!gameStarted) return;
 
-  const velocityChangeWhileHeating = 0.4;
-  const velocityChangeWhileCooling = 0.2;
+  const velocityChangeWhileHeating = 0.4; //velocidad incrementando
+  const velocityChangeWhileCooling = 0.2; //velocidad descendiendo
+
+  // condicionarlo cuando ya no hay fuel
 
   if (heating && fuel > 0) {
     if (verticalVelocity > -8) {
-      // Limit maximum rising spead
+      //Límite máximo de subida (empujar hacía arriba)
       verticalVelocity -= velocityChangeWhileHeating;
     }
     fuel -= 0.002 * -balloonY;
   } else if (verticalVelocity < 5) {
-    // Limit maximum descending spead
-    verticalVelocity += velocityChangeWhileCooling;
+    //Límite máximo de bajada (dejar que la gravedad actùe )
+    verticalVelocity += velocityChangeWhileCooling; //ajusta la velocidad
   }
 
-  balloonY += verticalVelocity; // Move the balloon up or down
-  if (balloonY > 0) balloonY = 0; // The balloon landed on the ground
-  if (balloonY < 0) balloonX += horizontalVelocity; // Move balloon to the right if not on the ground
+   /// cuando las coordenadas crecen hacía abajo los valores están al revés
+ // establecer un límite inferior para que la velocidad descendiendo sea lenta
 
-  // If a tree moves out of the picture replace it with a new one
-  if (trees[0].x - (balloonX - horizontalPadding) < -100) {
-    trees.shift(); // Remove first item in array
-    generateTree(); // Add a new item to the array
+  balloonY += verticalVelocity;// después de ajustar, establece posicion actual del globo
+  if (balloonY > 0) balloonY = 0; // aterrizando el globo, para
+  if (balloonY < 0) balloonX += horizontalVelocity; //mover el globo a velocidad hoizontal si no ha aterrizado(es un valor constante)
+
+  //para no quedarnos sin piramides e irlas actualizando
+  if (pyramids[0].x - (balloonX - horizontalPadding) < -100) {
+    pyramids.shift();  // remueve el primer item del array
+    generatePyramid();  //agrega uno nuevo
   }
 
-  // If a tree on the background hill moves out of the picture replace it with a new one
+  // Si un árbol en la colina de fondo se sale de la imagen, reemplácelo por uno nuevo
   if (
-    backgroundTrees[0].x - (balloonX * hill1Speed - horizontalPadding) <
+    backgroundBuilding[0].x - (balloonX * hill1Speed - horizontalPadding) <
     -40
   ) {
-    backgroundTrees.shift(); // Remove first item in array
-    generateBackgroundTree(); // Add a new item to the array
+    backgroundBuilding.shift();  // remueve primer item
+    generateBackgroundBuilding(); // agrega uno nuevo
   }
 
-  draw(); // Re-render the whole scene
+  draw(); //volver a renderizar toda la escena
 
   // If the balloon hit a tree OR ran out of fuel and landed then stop the game
   const hit = hitDetection();
@@ -204,39 +206,48 @@ function animate() {
     restartButton.style.display = "block";
     return;
   }
+  //Si el globo pega una piramide o se le acaba la gaso y pega 
+//antes de solicitar la otra animación comprobamos si pegó o acabó gaso y retorna la función
+//así que ya no solicita otra animación y acaba el juego
+
 
   window.requestAnimationFrame(animate);
 }
 
 function draw() {
-  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-
-  drawSky(); // Fill the background with a gradient
+  //mover la escena sobre la X del globo en dirección opuesta para equilibrar su mov
+    //generar la escena en la que parece que el globo se mueve. (solo va hacía arriba y abajo en realidad)
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);  //Limpiar cuando inicie nuevo
+ //Guarda y acumula la posición
+  drawSky(); // colorea el backround con un gradiente
+ //Guardar y acumular la posición
 
   ctx.save();
-  ctx.translate(0, verticalPadding + mainAreaHeight);
-  drawBackgroundHills();
+  ctx.translate(0, verticalPadding + mainAreaHeight); // centra el area principal de canvas en el medio de la pantalla
+  drawBackgroundHills(); //llama a la función
 
   ctx.translate(horizontalPadding, 0);
 
-  // Center main canvas area to the middle of the screen
+  // centra el area principal de canvas en el medio de la pantalla
   ctx.translate(-balloonX, 0);
 
-  // Draw scene
-  drawTrees();
+//dibujar escena llamando la función
+  drawPyramids();
   drawBalloon();
 
-  // Restore transformation
+  //resetear a la posición inicial
   ctx.restore();
 
-  // Header is last because it's on top of everything else
+   //dibujar encabezado que va al final porque es el top de la página
+
   drawHeader();
 }
 
 restartButton.addEventListener("click", function (event) {
   event.preventDefault();
   resetGame();
-  restartButton.style.display = "none";
+  restartButton.style.display = "none"; // activar boton de reseteo
+  winButton.style.display = "none";  // activar botón win
 });
 
 function drawCircle(cx, cy, radius) {
@@ -245,23 +256,23 @@ function drawCircle(cx, cy, radius) {
   ctx.fill();
 }
 
-function drawTrees() {
-  trees.forEach(({ x, h, r1, r2, r3, r4, r5, r6, r7, color }) => {
+function drawPyramids() {
+  pyramids.forEach(({ x, h, r1, r2, r3, r4, r5, r6, r7, color }) => {
     ctx.save();
     ctx.translate(x, 0);
 
-    // Trunk
-    const trunkWidth = 80;
+    // Forma de pirámide
+    const pyramidWidth = 80;
     ctx.fillStyle = "#AC8141";
     ctx.beginPath();
-    ctx.moveTo(trunkWidth, 0);
-    ctx.lineTo(0, -trunkWidth)
-    ctx.lineTo(-trunkWidth, 0);
+    ctx.moveTo(pyramidWidth, 0);
+    ctx.lineTo(0, -pyramidWidth)
+    ctx.lineTo(-pyramidWidth, 0);
     
     ctx.closePath();
     ctx.fill();
 
-    // Crown
+    // Círculos de pirámide
     ctx.fillStyle = color;
     drawCircle(-20, -h - 15, r1);
     drawCircle(-30, -h - 25, r2);
@@ -310,7 +321,7 @@ function drawBalloon() {
 }
 
 function drawHeader() {
-  // Fuel meter
+  // Medidor de combustible
   ctx.strokeStyle = fuel <= 30 ? "red" : "white";
   ctx.strokeRect(30, 30, 150, 30);
   ctx.fillStyle = fuel <= 30 
@@ -325,6 +336,10 @@ function drawHeader() {
   ctx.textAlign = "end";
   ctx.textBaseline = "top";
   ctx.fillText(`${score} m`, window.innerWidth - 30, 30);
+  if (score == 200) {
+    winButton.style.display = "block";
+
+  }
 }
 
 function drawSky() {
@@ -336,7 +351,7 @@ function drawSky() {
 }
 
 function drawBackgroundHills() {
-  // Draw hills
+  // Dibujo de colinas
   drawHill(
     hill1BaseHeight,
     hill1Speed,
@@ -360,11 +375,11 @@ function drawBackgroundHills() {
     "#b18b54"
   );
 
-  // Draw background trees
-  backgroundTrees.forEach((tree) => drawBackgroundTree(tree.x, tree.color));
+  // Dibujar el background de edificios
+  backgroundBuilding.forEach((building) => drawBackgroundBuilding(building.x, building.color));
 }
 
-// A hill is a shape under a stretched out sinus wave
+//la colina que se forma con una onda -sinus- y stretch
 function drawHill(baseHeight, speedMultiplier, amplitude, stretch, color) {
   ctx.beginPath();
   ctx.moveTo(0, window.innerHeight);
@@ -377,30 +392,30 @@ function drawHill(baseHeight, speedMultiplier, amplitude, stretch, color) {
   ctx.fill();
 }
 
-function drawBackgroundTree(x, color) {
+function drawBackgroundBuilding(x, color) {
   ctx.save();
   ctx.translate(
     (-balloonX * hill1Speed + x) * hill1Stretch,
-    getTreeY(x, hill1BaseHeight, hill1Amplitude)
+    getBuildingY(x, hill1BaseHeight, hill1Amplitude)
   );
 
-  const treeTrunkHeight = 80;
-  const treeTrunkWidth = 40;
+  const buildingHeight = 80;
+  const buildingWidth = 40;
   
 
-  // Draw trunk
+  // Dibujar edificio y colorear
   ctx.fillStyle = "#B6976E";
   ctx.fillRect(
-    -treeTrunkWidth / 2,
-    -treeTrunkHeight,
-    treeTrunkWidth,
-    treeTrunkHeight
+    -buildingWidth / 2,
+    -buildingHeight,
+    buildingWidth,
+    buildingHeight
   );
 
-  // Draw crown
+  //darle forma
   ctx.beginPath();
-  ctx.moveTo(0, -treeTrunkHeight);
-  ctx.lineTo(0, -treeTrunkHeight);
+  ctx.moveTo(0, -buildingHeight);
+  ctx.lineTo(0, -buildingHeight);
   ctx.fillStyle = color;
   ctx.fill();
 
@@ -415,42 +430,43 @@ function getHillY(x, baseHeight, speedMultiplier, amplitude, stretch) {
   );
 }
 
-function getTreeY(x, baseHeight, amplitude) {
+function getBuildingY(x, baseHeight, amplitude) {
   const sineBaseY = -baseHeight;
   return Math.sinus(x) * amplitude + sineBaseY;
 }
-
+// detectar cuando golpee. Establecer los puntos de choque
 function hitDetection() {
-  const cartBottomLeft = { x: balloonX - 30, y: balloonY };
+  const cartBottomLeft = { x: balloonX - 30, y: balloonY };   //punto de choque en el balloon
   const cartBottomRight = { x: balloonX + 30, y: balloonY };
   const cartTopRight = { x: balloonX + 30, y: balloonY - 40 };
 
-  for (const { x, h, r1, r2, r3, r4, r5 } of trees) {
-    const treeBottomLeft = { x: x - 20, y: -h - 15 };
-    const treeLeft = { x: x - 30, y: -h - 25 };
-    const treeTopLeft = { x: x - 20, y: -h - 35 };
-    const treeTop = { x: x, y: -h - 45 };
-    const treeTopRight = { x: x + 20, y: -h - 35 };
+  for (const { x, h, r1, r2, r3, r4, r5 } of pyramids) {
+    const pyramidBottomLeft = { x: x - 20, y: -h - 15 };   ///puntos de choque en los círculos de las piramides
 
-    if (getDistance(cartBottomLeft, treeBottomLeft) < r1) return true;
-    if (getDistance(cartBottomRight, treeBottomLeft) < r1) return true;
-    if (getDistance(cartTopRight, treeBottomLeft) < r1) return true;
+    const pyramidLeft = { x: x - 30, y: -h - 25 };
+    const pyramidTopLeft = { x: x - 20, y: -h - 35 };
+    const pyramidTop = { x: x, y: -h - 45 };
+    const pyramidTopRight = { x: x + 20, y: -h - 35 };
 
-    if (getDistance(cartBottomLeft, treeLeft) < r2) return true;
-    if (getDistance(cartBottomRight, treeLeft) < r2) return true;
-    if (getDistance(cartTopRight, treeLeft) < r2) return true;
+    if (getDistance(cartBottomLeft, pyramidBottomLeft) < r1) return true;
+    if (getDistance(cartBottomRight, pyramidBottomLeft) < r1) return true;
+    if (getDistance(cartTopRight, pyramidBottomLeft) < r1) return true;
 
-    if (getDistance(cartBottomLeft, treeTopLeft) < r3) return true;
-    if (getDistance(cartBottomRight, treeTopLeft) < r3) return true;
-    if (getDistance(cartTopRight, treeTopLeft) < r3) return true;
+    if (getDistance(cartBottomLeft, pyramidLeft) < r2) return true;
+    if (getDistance(cartBottomRight, pyramidLeft) < r2) return true;
+    if (getDistance(cartTopRight, pyramidLeft) < r2) return true;
 
-    if (getDistance(cartBottomLeft, treeTop) < r4) return true;
-    if (getDistance(cartBottomRight, treeTop) < r4) return true;
-    if (getDistance(cartTopRight, treeTop) < r4) return true;
+    if (getDistance(cartBottomLeft, pyramidTopLeft) < r3) return true;
+    if (getDistance(cartBottomRight, pyramidTopLeft) < r3) return true;
+    if (getDistance(cartTopRight, pyramidTopLeft) < r3) return true;
 
-    if (getDistance(cartBottomLeft, treeTopRight) < r5) return true;
-    if (getDistance(cartBottomRight, treeTopRight) < r5) return true;
-    if (getDistance(cartTopRight, treeTopRight) < r5) return true;
+    if (getDistance(cartBottomLeft, pyramidTop) < r4) return true;
+    if (getDistance(cartBottomRight, pyramidTop) < r4) return true;
+    if (getDistance(cartTopRight, pyramidTop) < r4) return true;
+
+    if (getDistance(cartBottomLeft, pyramidTopRight) < r5) return true;
+    if (getDistance(cartBottomRight, pyramidTopRight) < r5) return true;
+    if (getDistance(cartTopRight, pyramidTopRight) < r5) return true;
   }
 }
 
@@ -458,3 +474,6 @@ function getDistance(point1, point2) {
   return Math.sqrt((point2.x - point1.x) ** 2 + (point2.y - point1.y) ** 2);
 }
 
+function restart() {
+  resetGame();
+}
