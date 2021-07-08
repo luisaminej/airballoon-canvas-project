@@ -1,4 +1,3 @@
-
 // Game data
 let gameStarted; // Boolean
 
@@ -42,6 +41,7 @@ const ctx = canvas.getContext("2d");
 const introductionElement = document.getElementById("introduction");
 const restartButton = document.getElementById("restart");
 const winButton = document.getElementById("win");
+let audio = document.getElementById("audio")
 
 // Función para cambiar radianes a degrees
 Math.sinus = function (degree) {
@@ -211,7 +211,7 @@ function animate() {
 //así que ya no solicita otra animación y acaba el juego
 
 
-  window.requestAnimationFrame(animate);
+window.requestAnimationFrame(animate);
 }
 
 function draw() {
@@ -243,7 +243,10 @@ function draw() {
   drawHeader();
 }
 
+
+
 restartButton.addEventListener("click", function (event) {
+  audio.innerHTML = `<audio src="sounds/music.mp3" autoplay></audio>`
   event.preventDefault();
   resetGame();
   restartButton.style.display = "none"; // activar boton de reseteo
@@ -337,10 +340,11 @@ function drawHeader() {
   ctx.textAlign = "end";
   ctx.textBaseline = "top";
   ctx.fillText(`${score} m`, window.innerWidth - 30, 30);
-  if (score == 100) {
+  if (score == 150) {
     winButton.style.display = "block";
-    return;
     
+    audio.innerHTML = `<audio src="sounds/music.mp3" autoplay></audio>`
+    window.requestAnimationFrame();
 
   }
 }

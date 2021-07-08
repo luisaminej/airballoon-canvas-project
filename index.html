@@ -9,9 +9,10 @@
     
     <title>Egypcian Air Balloon</title>
 </head>
-<body>
+<body onload="resetGame()">
 
     <div class="container">
+      <div id="audio"> <audio src="sounds/music.mp3" autoplay></audio></div>
         <canvas id="game"></canvas>
         <div id="introduction">
           <h1> WELCOME TO EGYPT!! </h1> <br>
@@ -21,11 +22,12 @@
         </div>
         <button id="restart">RESTART</button>
         <button hidden id="win" onclick="restart();">YOU WIN!</button>
-        <button id="audio" src="sounds/music.mp3" type="audio/mp3"></button>>
+ 
           
         </button>
       
       </div>
+      
       
       <script src="./canvas.js"></script>
     
