@@ -247,6 +247,7 @@ restartButton.addEventListener("click", function (event) {
   event.preventDefault();
   resetGame();
   restartButton.style.display = "none"; // activar boton de reseteo
+  resetGame();
   winButton.style.display = "none";  // activar botón win
 });
 
@@ -336,8 +337,10 @@ function drawHeader() {
   ctx.textAlign = "end";
   ctx.textBaseline = "top";
   ctx.fillText(`${score} m`, window.innerWidth - 30, 30);
-  if (score == 200) {
+  if (score == 100) {
     winButton.style.display = "block";
+    return;
+    
 
   }
 }
